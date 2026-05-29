@@ -26,7 +26,7 @@ import time
 import zlib
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 
 MAX_DLC = 64
@@ -39,6 +39,50 @@ class CanFrame:
     arbitration_id: int
     dlc: int
     payload: bytes
+
+
+def load_blf_frames(path: Path, max_frames: Optional[int] = None) -> List[CanFrame]:
+    """
+    Load CAN/CAN-FD frames from a Vector BLF file with python-can.
+
+    Error frames and remote frames are skipped because this compression
+    experiment models payload-bearing CAN records:
+    timestamp_delta_us, arbitration_id, dlc, payload.
+    """
+
+    if not path.exists():
+        raise SystemExit(f"BLF file not found: {path}")
+
+    try:
+        import can  # type: ignore
+    except ImportError as exc:
+        raise SystemExit(
+            "Reading BLF requires python-can. Install it with:\n"
+            "  python3 -m pip install python-can"
+        ) from exc
+
+    frames: List[CanFrame] = []
+    last_ts: Optional[float] = None
+    with can.BLFReader(str(path)) as reader:
+        for msg in reader:
+            if getattr(msg, "is_error_frame", False) or getattr(msg, "is_remote_frame", False):
+                continue
+            payload = bytes(msg.data)
+            if len(payload) > MAX_DLC:
+                payload = payload[:MAX_DLC]
+            timestamp = float(msg.timestamp)
+            if last_ts is None:
+                delta_us = 0
+            else:
+                delta_us = max(0, int(round((timestamp - last_ts) * 1_000_000.0)))
+            last_ts = timestamp
+            frames.append(CanFrame(delta_us, int(msg.arbitration_id), len(payload), payload))
+            if max_frames is not None and len(frames) >= max_frames:
+                break
+
+    if not frames:
+        raise SystemExit(f"No payload CAN/CAN-FD frames were read from {path}")
+    return frames
 
 
 class AdaptiveByteModel:
@@ -515,7 +559,7 @@ def raw_and_zlib_baselines(frames: List[CanFrame], train_ratio: float) -> Dict[s
     }
 
 
-def summarize_dataset(frames: List[CanFrame]) -> Dict[str, object]:
+def summarize_dataset(frames: List[CanFrame], source: str) -> Dict[str, object]:
     counts: Dict[str, int] = {}
     periods: Dict[int, List[int]] = {}
     for frame in frames:
@@ -523,6 +567,7 @@ def summarize_dataset(frames: List[CanFrame]) -> Dict[str, object]:
         counts[key] = counts.get(key, 0) + 1
         periods.setdefault(frame.arbitration_id, []).append(frame.timestamp_delta_us)
     return {
+        "source": source,
         "frames": len(frames),
         "raw_record_bytes": len(serialize_frames(frames)),
         "ids": counts,
@@ -553,20 +598,39 @@ def print_table(results: Dict[str, Dict[str, float]]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Compress parsed CAN records from either a BLF file or a synthetic generator."
+    )
+    parser.add_argument("--input-blf", type=Path, help="Read CAN/CAN-FD frames from a Vector BLF file")
+    parser.add_argument("--max-frames", type=int, help="Limit frames read from BLF or generated synthetically")
     parser.add_argument("--frames", type=int, default=60000)
     parser.add_argument("--train-ratio", type=float, default=0.7)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--out", type=Path, default=Path("results.json"))
     parser.add_argument("--data-out", type=Path, default=Path("synthetic_can_records.jsonl"))
+    parser.add_argument("--skip-data-out", action="store_true", help="Do not write parsed records as JSONL")
     args = parser.parse_args()
 
     if not 0.0 <= args.train_ratio < 1.0:
         raise SystemExit("--train-ratio must be in [0, 1)")
+    if args.max_frames is not None and args.max_frames <= 0:
+        raise SystemExit("--max-frames must be positive")
 
-    frames = generate_can_frames(args.frames, args.seed)
-    write_jsonl(frames, args.data_out)
-    dataset = summarize_dataset(frames)
+    if args.input_blf:
+        frames = load_blf_frames(args.input_blf, args.max_frames)
+        source = f"blf:{args.input_blf}"
+    else:
+        frame_count = args.max_frames if args.max_frames is not None else args.frames
+        frames = generate_can_frames(frame_count, args.seed)
+        source = f"synthetic:seed={args.seed}"
+
+    split = int(len(frames) * args.train_ratio)
+    if split >= len(frames):
+        raise SystemExit("train split consumes all frames; lower --train-ratio or provide more frames")
+
+    if not args.skip_data_out:
+        write_jsonl(frames, args.data_out)
+    dataset = summarize_dataset(frames, source)
     print("Dataset summary:")
     print(json.dumps(dataset, indent=2, ensure_ascii=False))
 
@@ -587,7 +651,8 @@ def main() -> None:
         encoding="utf-8",
     )
     print(f"\nWrote {args.out}")
-    print(f"Wrote {args.data_out}")
+    if not args.skip_data_out:
+        print(f"Wrote {args.data_out}")
 
 
 if __name__ == "__main__":

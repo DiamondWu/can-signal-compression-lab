@@ -2,8 +2,10 @@ __pycache__/
 *.pyc
 
 # Generated datasets and codec artifacts
+*.blf
 synthetic_can_records*.jsonl
 synthetic_can_eval_*.raw
+*_eval.raw
 *.raw.zst
 *.raw.xz
 
@@ -11,6 +13,7 @@ synthetic_can_eval_*.raw
 *.html.png
 codec_comparison_5mb.png
 codec_comparison_5mb_v2.png
+tmp_*
 
 # macOS
 .DS_Store

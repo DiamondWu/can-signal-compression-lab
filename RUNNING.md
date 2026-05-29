@@ -3,7 +3,8 @@
 ## Requirements
 
 - Python 3.10 or newer
-- No Python package installation is required
+- No Python package installation is required for synthetic data
+- BLF input requires `python-can`
 - Optional external codecs:
   - `zstd` for Zstandard benchmarks
   - `xz` for LZMA2 / 7z-like benchmarks
@@ -11,6 +12,12 @@
 The neural-style predictors are dependency-free online models implemented in
 pure Python. They are intended for algorithm comparison and reproducible
 experiments, not GPU training.
+
+Install the optional BLF reader dependency only when you need BLF input:
+
+```bash
+python3 -m pip install -r requirements-blf.txt
+```
 
 ## Quick Start
 
@@ -24,6 +31,56 @@ This writes:
 
 - `synthetic_can_records.jsonl`: generated parsed CAN records
 - `results.json`: benchmark metrics
+
+## BLF Input
+
+To compress from a real Vector BLF file, pass `--input-blf`. The script reads
+CAN and CAN-FD messages with `python-can`, skips remote and error frames, and
+converts every payload-bearing message into this parsed record shape:
+
+```text
+timestamp_delta_us, arbitration_id, dlc, payload_hex
+```
+
+Example:
+
+```bash
+python3 can_compression_lab.py \
+  --input-blf /path/to/drive_log.blf \
+  --train-ratio 0.7 \
+  --out drive_log_results.json \
+  --data-out drive_log_records.jsonl
+```
+
+For large BLF files, avoid writing the JSONL copy:
+
+```bash
+python3 can_compression_lab.py \
+  --input-blf /path/to/drive_log.blf \
+  --train-ratio 0.7 \
+  --out drive_log_results.json \
+  --skip-data-out
+```
+
+To test quickly on the first N payload frames:
+
+```bash
+python3 can_compression_lab.py \
+  --input-blf /path/to/drive_log.blf \
+  --max-frames 100000 \
+  --out drive_log_100k_results.json \
+  --skip-data-out
+```
+
+The reported `raw_bytes` are not BLF file bytes. They are bytes in the normalized
+parsed-record stream used by the compressor:
+
+```text
+4 bytes timestamp_delta_us + 4 bytes arbitration_id + 1 byte dlc + payload bytes
+```
+
+This is intentional: the algorithm compresses CAN signals after parsing, not
+the BLF container bytes.
 
 ## 5 MB Experiment
 
@@ -47,6 +104,16 @@ evaluation split:
 
 ```bash
 python3 benchmark_codecs_5mb.py
+```
+
+You can also benchmark external codecs on a BLF-derived parsed-record stream:
+
+```bash
+python3 benchmark_codecs_5mb.py \
+  --input-blf /path/to/drive_log.blf \
+  --train-ratio 0.7 \
+  --raw-out drive_log_eval.raw \
+  --out drive_log_codec_results.json
 ```
 
 The script benchmarks:
@@ -102,8 +169,7 @@ qlmanage -t -s 1400 -o . codec_comparison_5mb.html
 
 ## Suggested Next Steps
 
-- Replace the synthetic generator with a BLF/ASC/MDF parser that emits the same
-  record shape: `timestamp_delta_us`, `arbitration_id`, `dlc`, `payload`.
+- Add ASC/MDF readers that emit the same record shape as the BLF reader.
 - Add a real range coder bitstream writer/reader behind the adaptive models.
 - Compare per-signal residual coding after DBC decoding versus raw payload-byte
   residual coding.
