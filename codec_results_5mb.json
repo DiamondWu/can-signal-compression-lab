@@ -1,0 +1,18 @@
+{
+  "zstd_19_on_parsed_records": {
+    "frames": 75000,
+    "raw_bytes": 1505160,
+    "compressed_bytes_est": 730463,
+    "compression_ratio_raw_over_compressed": 2.0605561130406334,
+    "encode_mb_per_sec": 1.0170235069807705,
+    "decode_mb_per_sec": 294.0172759816307
+  },
+  "xz_lzma2_9e_7zip_like": {
+    "frames": 75000,
+    "raw_bytes": 1505160,
+    "compressed_bytes_est": 592832,
+    "compression_ratio_raw_over_compressed": 2.538931771564288,
+    "encode_mb_per_sec": 2.4564565911852747,
+    "decode_mb_per_sec": 58.0700986588624
+  }
+}

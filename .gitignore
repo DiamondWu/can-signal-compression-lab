@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+
+# Generated datasets and codec artifacts
+synthetic_can_records*.jsonl
+synthetic_can_eval_*.raw
+*.raw.zst
+*.raw.xz
+
+# Intermediate screenshots
+*.html.png
+codec_comparison_5mb.png
+codec_comparison_5mb_v2.png
+
+# macOS
+.DS_Store

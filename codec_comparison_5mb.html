@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>5MB CAN Compression Codec Comparison</title>
+  <style>
+    :root {
+      --ink: #172026;
+      --muted: #5b6870;
+      --line: #d8dee3;
+      --bg: #f4f7f9;
+      --panel: #ffffff;
+      --blue: #14639a;
+      --green: #22764c;
+      --amber: #a76513;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.42 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      width: 920px;
+      margin: 28px auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px 30px 26px;
+      box-shadow: 0 12px 30px rgba(23, 32, 38, 0.08);
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .sub {
+      color: var(--muted);
+      margin: 0 0 16px;
+      font-size: 16px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #fbfcfd;
+    }
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .metric strong {
+      display: block;
+      margin-top: 3px;
+      font-size: 22px;
+    }
+    .charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .chart {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfd;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    .bar-row {
+      display: grid;
+      grid-template-columns: 132px 1fr 48px;
+      gap: 8px;
+      align-items: center;
+      margin: 7px 0;
+    }
+    .label {
+      color: #25333b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track {
+      height: 14px;
+      background: #e8eef2;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar {
+      height: 100%;
+      background: var(--blue);
+    }
+    .bar.ratio {
+      background: var(--green);
+    }
+    .bar.codec {
+      background: var(--amber);
+    }
+    .value {
+      text-align: right;
+      font-weight: 700;
+      color: #0e5f92;
+    }
+    .value.ratio {
+      color: var(--green);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 7px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+    th:first-child, td:first-child {
+      text-align: left;
+      width: 285px;
+    }
+    th {
+      background: #edf3f7;
+      color: #24323b;
+      font-weight: 700;
+    }
+    tr.neural {
+      background: #eef7fb;
+    }
+    tr.best {
+      background: #edf8f2;
+    }
+    .note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>5MB CAN Compression Comparison</h1>
+    <p class="sub">250,000 frames, generated raw parsed records 5.02 MB, evaluation split 1.51 MB</p>
+
+    <section class="metrics">
+      <div class="metric"><span>Generated frames</span><strong>250,000</strong></div>
+      <div class="metric"><span>Raw records</span><strong>5.02 MB</strong></div>
+      <div class="metric"><span>Eval records</span><strong>1.51 MB</strong></div>
+      <div class="metric"><span>CAN IDs</span><strong>9</strong></div>
+    </section>
+
+    <section class="charts">
+      <div class="chart">
+        <h2>Compression Ratio</h2>
+        <div class="bar-row"><div class="label">zlib level 9</div><div class="track"><div class="bar codec ratio" style="width:44.5%"></div></div><div class="value ratio">1.89x</div></div>
+        <div class="bar-row"><div class="label">zstd -19</div><div class="track"><div class="bar codec ratio" style="width:48.5%"></div></div><div class="value ratio">2.06x</div></div>
+        <div class="bar-row"><div class="label">xz/LZMA2 -9e</div><div class="track"><div class="bar codec ratio" style="width:59.8%"></div></div><div class="value ratio">2.54x</div></div>
+        <div class="bar-row"><div class="label">GRU + entropy</div><div class="track"><div class="bar ratio" style="width:89.2%"></div></div><div class="value ratio">3.79x</div></div>
+        <div class="bar-row"><div class="label">TCN + entropy</div><div class="track"><div class="bar ratio" style="width:94.4%"></div></div><div class="value ratio">4.01x</div></div>
+        <div class="bar-row"><div class="label">last-value + entropy</div><div class="track"><div class="bar ratio" style="width:100%"></div></div><div class="value ratio">4.25x</div></div>
+      </div>
+
+      <div class="chart">
+        <h2>Encode Throughput</h2>
+        <div class="bar-row"><div class="label">zlib level 9</div><div class="track"><div class="bar codec" style="width:100%"></div></div><div class="value">8.42</div></div>
+        <div class="bar-row"><div class="label">zstd -19</div><div class="track"><div class="bar codec" style="width:12.1%"></div></div><div class="value">1.02</div></div>
+        <div class="bar-row"><div class="label">xz/LZMA2 -9e</div><div class="track"><div class="bar codec" style="width:29.2%"></div></div><div class="value">2.46</div></div>
+        <div class="bar-row"><div class="label">GRU + entropy</div><div class="track"><div class="bar" style="width:2.7%"></div></div><div class="value">0.23</div></div>
+        <div class="bar-row"><div class="label">TCN + entropy</div><div class="track"><div class="bar" style="width:8.7%"></div></div><div class="value">0.73</div></div>
+        <div class="bar-row"><div class="label">last-value + entropy</div><div class="track"><div class="bar" style="width:70.0%"></div></div><div class="value">5.89</div></div>
+      </div>
+    </section>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Compressed bytes</th>
+          <th>Ratio</th>
+          <th>Payload bpp</th>
+          <th>Encode MB/s</th>
+          <th>Decode MB/s</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>zlib level 9 on parsed records</td><td>797,423</td><td>1.89x</td><td>-</td><td>8.42</td><td>736.83</td></tr>
+        <tr><td>zstd -19 on parsed records</td><td>730,463</td><td>2.06x</td><td>-</td><td>1.02</td><td>294.02</td></tr>
+        <tr><td>xz/LZMA2 -9e, 7z-like codec</td><td>592,832</td><td>2.54x</td><td>-</td><td>2.46</td><td>58.07</td></tr>
+        <tr class="neural"><td>grouped GRU predictor + entropy</td><td>396,727</td><td>3.79x</td><td>2.377</td><td>0.23</td><td>0.23</td></tr>
+        <tr class="neural"><td>grouped TCN predictor + entropy</td><td>375,666</td><td>4.01x</td><td>2.174</td><td>0.73</td><td>0.80</td></tr>
+        <tr class="best"><td>grouped last-value + entropy baseline</td><td>353,751</td><td>4.25x</td><td>1.963</td><td>5.89</td><td>19.15</td></tr>
+      </tbody>
+    </table>
+
+    <p class="note">7z was not installed, so <code>xz -9e</code> is used as an LZMA2 7z-like baseline. Neural rows use adaptive entropy-code size estimation.</p>
+  </main>
+</body>
+</html>

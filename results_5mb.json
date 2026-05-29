@@ -1,0 +1,74 @@
+{
+  "dataset": {
+    "frames": 250000,
+    "raw_record_bytes": 5017032,
+    "ids": {
+      "0x110": 68495,
+      "0x100": 68491,
+      "0x130": 34241,
+      "0x120": 34246,
+      "0x180": 13704,
+      "0x220": 6851,
+      "0x3A0": 3425,
+      "0x510": 13697,
+      "0x300": 6850
+    },
+    "timestamp_delta_us_mean": 2739.82,
+    "payload_bytes_mean": 11.07
+  },
+  "results": {
+    "raw": {
+      "frames": 75000,
+      "raw_bytes": 1505160,
+      "compressed_bytes_est": 1505160,
+      "compression_ratio_raw_over_compressed": 1.0,
+      "encode_frames_per_sec": Infinity,
+      "decode_frames_per_sec": Infinity,
+      "encode_mb_per_sec": Infinity,
+      "decode_mb_per_sec": Infinity
+    },
+    "zlib_level9_on_parsed_records": {
+      "frames": 75000,
+      "raw_bytes": 1505160,
+      "compressed_bytes_est": 797423,
+      "compression_ratio_raw_over_compressed": 1.8875302066782624,
+      "encode_frames_per_sec": 419677.3644183818,
+      "decode_frames_per_sec": 36715212.10156283,
+      "encode_mb_per_sec": 8.42242109103962,
+      "decode_mb_per_sec": 736.8302486238441
+    },
+    "grouped_gru_predictor_arithmetic": {
+      "frames": 75000,
+      "raw_bytes": 1505160,
+      "compressed_bytes_est": 396727,
+      "compression_ratio_raw_over_compressed": 3.7939439463409346,
+      "bits_per_payload_byte": 2.377069645612348,
+      "encode_frames_per_sec": 11303.043985036264,
+      "decode_frames_per_sec": 11663.787666467875,
+      "encode_mb_per_sec": 0.22683852912689578,
+      "decode_mb_per_sec": 0.2340782219208105
+    },
+    "grouped_tcn_predictor_arithmetic": {
+      "frames": 75000,
+      "raw_bytes": 1505160,
+      "compressed_bytes_est": 375666,
+      "compression_ratio_raw_over_compressed": 4.006644199900976,
+      "bits_per_payload_byte": 2.174111482532187,
+      "encode_frames_per_sec": 36231.48586159133,
+      "decode_frames_per_sec": 39700.337427487,
+      "encode_mb_per_sec": 0.7271224434591042,
+      "decode_mb_per_sec": 0.7967381317647511
+    },
+    "grouped_last_value_arithmetic": {
+      "frames": 75000,
+      "raw_bytes": 1505160,
+      "compressed_bytes_est": 353751,
+      "compression_ratio_raw_over_compressed": 4.254857230085569,
+      "bits_per_payload_byte": 1.962927842898063,
+      "encode_frames_per_sec": 293288.3403574825,
+      "decode_frames_per_sec": 954368.4627130433,
+      "encode_mb_per_sec": 5.8859450449662445,
+      "decode_mb_per_sec": 19.153029804495525
+    }
+  }
+}

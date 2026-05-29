@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CAN Signal Compression Results</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172026;
+      --muted: #5e6b73;
+      --line: #d8dee3;
+      --blue: #0f5f8f;
+      --green: #1f7a4d;
+      --bg: #f5f7f9;
+      --panel: #ffffff;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 16px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    main {
+      width: 900px;
+      margin: 32px auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 30px 34px 34px;
+      box-shadow: 0 12px 28px rgba(23, 32, 38, 0.08);
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 26px;
+      letter-spacing: 0;
+    }
+    .sub {
+      margin: 0 0 24px;
+      color: var(--muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+      background: #fbfcfd;
+    }
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 24px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 10px 7px;
+      font-size: 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+    th:first-child, td:first-child {
+      text-align: left;
+      width: 270px;
+    }
+    th {
+      background: #edf3f7;
+      color: #23313a;
+      font-weight: 650;
+    }
+    tr.best {
+      background: #edf8f2;
+    }
+    tr.focus {
+      background: #eef6fb;
+    }
+    td.ratio {
+      color: var(--green);
+      font-weight: 700;
+    }
+    td.speed {
+      color: var(--blue);
+      font-weight: 650;
+    }
+    .note {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>CAN Signal Compression Test Results</h1>
+    <p class="sub">Generated from <code>can_compression_lab.py --frames 60000 --train-ratio 0.7</code></p>
+
+    <section class="grid" aria-label="dataset summary">
+      <div class="metric"><span>Total frames</span><strong>60,000</strong></div>
+      <div class="metric"><span>Evaluation raw bytes</span><strong>361,216</strong></div>
+      <div class="metric"><span>CAN IDs</span><strong>9</strong></div>
+      <div class="metric"><span>Mean payload bytes</span><strong>11.07</strong></div>
+    </section>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Method</th>
+          <th>Raw bytes</th>
+          <th>Compressed bytes</th>
+          <th>Ratio</th>
+          <th>Payload bpp</th>
+          <th>Encode MB/s</th>
+          <th>Decode MB/s</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>raw</td>
+          <td>361,216</td>
+          <td>361,216</td>
+          <td>1.00x</td>
+          <td>-</td>
+          <td>inf</td>
+          <td>inf</td>
+        </tr>
+        <tr>
+          <td>zlib level 9 on parsed records</td>
+          <td>361,216</td>
+          <td>190,508</td>
+          <td class="ratio">1.90x</td>
+          <td>-</td>
+          <td class="speed">9.05</td>
+          <td class="speed">733.50</td>
+        </tr>
+        <tr>
+          <td>grouped GRU predictor + arithmetic</td>
+          <td>361,216</td>
+          <td>102,300</td>
+          <td class="ratio">3.53x</td>
+          <td>2.643</td>
+          <td class="speed">0.23</td>
+          <td class="speed">0.24</td>
+        </tr>
+        <tr class="focus">
+          <td>grouped TCN predictor + arithmetic</td>
+          <td>361,216</td>
+          <td>99,212</td>
+          <td class="ratio">3.64x</td>
+          <td>2.519</td>
+          <td class="speed">0.73</td>
+          <td class="speed">0.80</td>
+        </tr>
+        <tr class="best">
+          <td>grouped last-value + arithmetic baseline</td>
+          <td>361,216</td>
+          <td>94,819</td>
+          <td class="ratio">3.81x</td>
+          <td>2.343</td>
+          <td class="speed">5.99</td>
+          <td class="speed">19.23</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p class="note">Speed is measured as evaluation raw record MB processed per second. Arithmetic/range coding size is measured with the same adaptive frequency model used by encoder and decoder simulation.</p>
+  </main>
+</body>
+</html>
